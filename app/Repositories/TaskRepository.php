@@ -8,7 +8,18 @@ class TaskRepository implements TaskRepositoryInterface
 {
     public function all()
     {
-        return Task::latest()->paginate(10);
+        $query = Task::query();
+
+        if (request()->filled('status')) {
+            $query->where('status', request('status'));
+        }
+
+        if (request()->boolean('overdue')) {
+            $query->whereDate('due_date', '<', now())
+                ->where('status', 'pending');
+        }
+
+        return $query->latest()->paginate(10);
     }
 
     public function find(int $id)
