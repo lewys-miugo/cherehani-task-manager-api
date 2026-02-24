@@ -18,7 +18,7 @@ class TaskResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
-            'status' => $this->status->value, // enum value
+            'status' => $this->status?->value, // enum value
             'due_date' => $this->due_date->format('Y-m-d'),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
