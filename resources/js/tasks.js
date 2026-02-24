@@ -25,35 +25,29 @@ async function loadTasks(page = 1) {
 }
 
 function renderTasks(tasks) {
-    const container = document.getElementById('tasksList');
+    const tbody = document.getElementById('tasksList');
 
     if (tasks.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-8">No tasks found</p>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No tasks found</td></tr>';
         return;
     }
 
-    container.innerHTML = tasks.map(task => `
-        <div class="bg-white p-4 rounded-lg shadow">
-            <div class="flex justify-between items-start mb-2">
-                <h3 class="text-lg font-semibold">${task.title}</h3>
-                <span class="px-2 py-1 text-xs rounded ${task.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                    ${task.status}
-                </span>
-            </div>
-
-            ${task.description ? `<p class="text-gray-600 mb-2">${task.description}</p>` : ''}
-
-            <div class="text-sm text-gray-500 mb-3">
-                Due: ${task.due_date}
-            </div>
-
-            ${token ? `
-                <div class="flex gap-2">
-                    <button onclick="editTask(${task.id})" class="text-blue-600 hover:text-blue-800">Edit</button>
-                    <button onclick="deleteTask(${task.id})" class="text-red-600 hover:text-red-800">Delete</button>
-                </div>
-            ` : ''}
-        </div>
+    tbody.innerHTML = tasks.map(task => `
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap font-medium">${task.title}</td>
+            <td class="px-6 py-4">${task.description || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${task.due_date}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="checkbox"
+                    ${task.status === 'completed' ? 'checked' : ''}
+                    onchange="toggleStatus(${task.id}, this.checked)"
+                    ${!token ? 'disabled' : ''}
+                    class="w-4 h-4">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                ${token ? `<button onclick="deleteTask(${task.id})" class="text-red-600 hover:text-red-800">Delete</button>` : '-'}
+            </td>
+        </tr>
     `).join('');
 }
 
@@ -87,6 +81,18 @@ function renderPagination(data) {
     container.innerHTML = html;
 }
 
+window.toggleStatus = async function(id, isCompleted) {
+    try {
+        await axios.put(`/api/tasks/${id}`, {
+            status: isCompleted ? 'completed' : 'pending'
+        });
+        loadTasks(currentPage);
+    } catch (error) {
+        alert('Error updating task status');
+        loadTasks(currentPage);
+    }
+}
+
 window.openModal = function(taskId = null) {
     document.getElementById('taskModal').classList.remove('hidden');
     document.getElementById('taskForm').reset();
@@ -113,16 +119,11 @@ async function loadTaskForEdit(id) {
         document.getElementById('taskId').value = task.id;
         document.getElementById('title').value = task.title;
         document.getElementById('description').value = task.description || '';
-        document.getElementById('status').value = task.status;
         document.getElementById('due_date').value = task.due_date;
         document.getElementById('modalTitle').textContent = 'Edit Task';
     } catch (error) {
         alert('Error loading task');
     }
-}
-
-window.editTask = function(id) {
-    openModal(id);
 }
 
 window.deleteTask = async function(id) {
@@ -143,7 +144,7 @@ document.getElementById('taskForm')?.addEventListener('submit', async (e) => {
     const data = {
         title: document.getElementById('title').value,
         description: document.getElementById('description').value,
-        status: document.getElementById('status').value,
+        status: 'pending',
         due_date: document.getElementById('due_date').value,
     };
 
