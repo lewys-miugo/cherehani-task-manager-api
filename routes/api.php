@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Api\TaskController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\TaskController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('tasks', TaskController::class)
